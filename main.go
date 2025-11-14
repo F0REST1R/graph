@@ -37,7 +37,7 @@ func main() {
 }
 
 func processRealMode(cfg *config.Config) {
-	
+
 	//Получение прямых зависимостей
 	deps, err := nuget.FetchPackageDependencies(cfg.Package, cfg.Version)
 	if err != nil {
@@ -48,7 +48,7 @@ func processRealMode(cfg *config.Config) {
 	nuget.PrintDependencies(cfg.Package, cfg.Version, deps)
 
 	//Построение полного графа зависимостей
-	getDepsFunc := func (packageName, version string) (map[string]string, error) {
+	getDepsFunc := func(packageName, version string) (map[string]string, error) {
 		deps, err := nuget.FetchPackageDependencies(cfg.Package, cfg.Version)
 		if err != nil {
 			return make(map[string]string), fmt.Errorf("⚠️  Предупреждение: не удалось получить зависимости для %s: %v\n", packageName, err)
@@ -65,16 +65,23 @@ func processRealMode(cfg *config.Config) {
 
 	graph.PrintGraph(dependencyGraph, cfg.Package)
 
-	loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
-	graph.PrintLoadOrder(loadOrder, cfg.Package)
+	// 4 этап
+	// loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
+	// graph.PrintLoadOrder(loadOrder, cfg.Package)
 
-	analyzeLoadOrder(loadOrder, cfg.Package)
+	// analyzeLoadOrder(loadOrder, cfg.Package)
+
+	plantUMLCode := graph.GeneratePlantUML(dependencyGraph, cfg.Package)
+	graph.PrintPlantUML(plantUMLCode, cfg.Package)
+
+	// Сохраняем в файл для удобства
+	savePlantUMLToFile(plantUMLCode, cfg.Package)
 }
 
 func processTestMode(cfg *config.Config) {
-		// Загружаем тестовый репозиторий из файла
+	// Загружаем тестовый репозиторий из файла
 	fmt.Printf("Загружаем тестовый репозиторий из: %s\n", cfg.URL)
-	
+
 	repo, err := testrepo.LoadTestRepo(cfg.URL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Ошибка загрузки тестового репозитория: %v\n", err)
@@ -99,12 +106,12 @@ func processTestMode(cfg *config.Config) {
 		return deps, nil
 	}
 
-	deps, err := getDepsFunc(cfg.Package, "") 
+	deps, err := getDepsFunc(cfg.Package, "")
 	if err != nil {
 		fmt.Printf("%v", err)
 		os.Exit(1)
 	}
-	
+
 	if len(deps) == 0 {
 		fmt.Printf("Пакет %s не имеет прямых зависимостей\n", cfg.Package)
 	} else {
@@ -122,29 +129,44 @@ func processTestMode(cfg *config.Config) {
 
 	graph.PrintGraph(dependencyGraph, cfg.Package)
 
-	loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
-	graph.PrintLoadOrder(loadOrder, cfg.Package)
+	plantUMLCode := graph.GeneratePlantUML(dependencyGraph, cfg.Package)
+	graph.PrintPlantUML(plantUMLCode, cfg.Package)
 
-	analyzeLoadOrder(loadOrder, cfg.Package)
+	savePlantUMLToFile(plantUMLCode, cfg.Package)
+
+	// 4 этап
+	// loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
+	// graph.PrintLoadOrder(loadOrder, cfg.Package)
+
+	// analyzeLoadOrder(loadOrder, cfg.Package)
 }
 
 //Для 4 этапа
-func analyzeLoadOrder(order []string, root string) {
-    fmt.Println("\n АНАЛИЗ ПОРЯДКА ЗАГРУЗКИ:")
-    fmt.Printf("• Всего пакетов для загрузки: %d\n", len(order))
-    fmt.Printf("• Корневой пакет загружается последним: %s\n", order[len(order)-1])
-    
-    // Проверяем корректность порядка
-    if len(order) > 0 && order[len(order)-1] != root {
-        fmt.Printf("⚠️  ВНИМАНИЕ: Корневой пакет должен загружаться последним!\n")
-    }
-    
-    fmt.Println("• Сравнение с реальными менеджерами пакетов:")
-    fmt.Println("  - NuGet: использует аналогичный подход 'снизу-вверх'")
-    fmt.Println("  - npm: также загружает зависимости перед зависимыми пакетами")
-    fmt.Println("  - Расхождения возможны при:")
-    fmt.Println("    * Параллельной загрузке независимых пакетов")
-    fmt.Println("    * Оптимизациях для уменьшения дублирования")
-    fmt.Println("    * Разных алгоритмах разрешения конфликтов версий")
-}
+// func analyzeLoadOrder(order []string, root string) {
+//     fmt.Println("\n АНАЛИЗ ПОРЯДКА ЗАГРУЗКИ:")
+//     fmt.Printf("• Всего пакетов для загрузки: %d\n", len(order))
+//     fmt.Printf("• Корневой пакет загружается последним: %s\n", order[len(order)-1])
 
+//     // Проверяем корректность порядка
+//     if len(order) > 0 && order[len(order)-1] != root {
+//         fmt.Printf("⚠️  ВНИМАНИЕ: Корневой пакет должен загружаться последним!\n")
+//     }
+
+//     fmt.Println("• Сравнение с реальными менеджерами пакетов:")
+//     fmt.Println("  - NuGet: использует аналогичный подход 'снизу-вверх'")
+//     fmt.Println("  - npm: также загружает зависимости перед зависимыми пакетами")
+//     fmt.Println("  - Расхождения возможны при:")
+//     fmt.Println("    * Параллельной загрузке независимых пакетов")
+//     fmt.Println("    * Оптимизациях для уменьшения дублирования")
+//     fmt.Println("    * Разных алгоритмах разрешения конфликтов версий")
+// }
+
+func savePlantUMLToFile(plantUMLCode string, packageName string) {
+	filename := fmt.Sprintf("%s_diagram.puml", packageName)
+	err := os.WriteFile(filename, []byte(plantUMLCode), 0644)
+	if err != nil {
+		fmt.Printf("⚠️ Не удалось сохранить диаграмму в файл: %v\n", err)
+	} else {
+		fmt.Printf("Диаграмма сохранена в файл: %s\n", filename)
+	}
+}

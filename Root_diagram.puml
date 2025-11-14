@@ -1,0 +1,26 @@
+@startuml
+title Граф зависимостей: Root
+skinparam componentStyle rectangle
+skinparam nodesep 20
+skinparam ranksep 30
+
+component "AuthService" as Node_AuthService
+component "Crypto" as Node_Crypto
+component "Database" as Node_Database
+component "EmailService" as Node_EmailService
+component "JWT" as Node_JWT
+component "Math" as Node_Math
+component "Network" as Node_Network
+component "Root" as Node_Root
+component "UserService" as Node_UserService
+
+Node_AuthService --> Node_Database
+Node_AuthService --> Node_JWT
+Node_Crypto --> Node_Math
+Node_EmailService --> Node_Network
+Node_JWT --> Node_Crypto
+Node_Root --> Node_AuthService
+Node_Root --> Node_UserService
+Node_UserService --> Node_Database
+Node_UserService --> Node_EmailService
+@enduml
