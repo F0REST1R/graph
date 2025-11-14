@@ -1,0 +1,10 @@
+Root: AuthService UserService
+AuthService: Database JWT
+UserService: Database EmailService
+Database: Config
+JWT: Crypto
+EmailService: Network Config
+Crypto: Math
+Network: Config
+Config:
+Math:

@@ -12,7 +12,7 @@ import (
 func main() {
 
 	//Загрузка конфигураций
-	cfg, err := config.LoadConfig("config_test.yaml") //тут указываем файл yaml с которым будем работать
+	cfg, err := config.LoadConfig("config_demo.yaml") //тут указываем файл yaml с которым будем работать
 	if err != nil {
 		fmt.Printf("Ошибка загрузки конфигураций: %v", err)
 		os.Exit(1)
@@ -64,6 +64,11 @@ func processRealMode(cfg *config.Config) {
 	}
 
 	graph.PrintGraph(dependencyGraph, cfg.Package)
+
+	loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
+	graph.PrintLoadOrder(loadOrder, cfg.Package)
+
+	analyzeLoadOrder(loadOrder, cfg.Package)
 }
 
 func processTestMode(cfg *config.Config) {
@@ -116,4 +121,30 @@ func processTestMode(cfg *config.Config) {
 	}
 
 	graph.PrintGraph(dependencyGraph, cfg.Package)
+
+	loadOrder := graph.GetLoadOrder(dependencyGraph, cfg.Package)
+	graph.PrintLoadOrder(loadOrder, cfg.Package)
+
+	analyzeLoadOrder(loadOrder, cfg.Package)
 }
+
+//Для 4 этапа
+func analyzeLoadOrder(order []string, root string) {
+    fmt.Println("\n АНАЛИЗ ПОРЯДКА ЗАГРУЗКИ:")
+    fmt.Printf("• Всего пакетов для загрузки: %d\n", len(order))
+    fmt.Printf("• Корневой пакет загружается последним: %s\n", order[len(order)-1])
+    
+    // Проверяем корректность порядка
+    if len(order) > 0 && order[len(order)-1] != root {
+        fmt.Printf("⚠️  ВНИМАНИЕ: Корневой пакет должен загружаться последним!\n")
+    }
+    
+    fmt.Println("• Сравнение с реальными менеджерами пакетов:")
+    fmt.Println("  - NuGet: использует аналогичный подход 'снизу-вверх'")
+    fmt.Println("  - npm: также загружает зависимости перед зависимыми пакетами")
+    fmt.Println("  - Расхождения возможны при:")
+    fmt.Println("    * Параллельной загрузке независимых пакетов")
+    fmt.Println("    * Оптимизациях для уменьшения дублирования")
+    fmt.Println("    * Разных алгоритмах разрешения конфликтов версий")
+}
+
