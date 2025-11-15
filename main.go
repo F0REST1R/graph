@@ -12,7 +12,7 @@ import (
 func main() {
 
 	//Загрузка конфигураций
-	cfg, err := config.LoadConfig("config_demo.yaml") //тут указываем файл yaml с которым будем работать
+	cfg, err := config.LoadConfig("config.yaml") //тут указываем файл yaml с которым будем работать
 	if err != nil {
 		fmt.Printf("Ошибка загрузки конфигураций: %v", err)
 		os.Exit(1)
@@ -48,13 +48,13 @@ func processRealMode(cfg *config.Config) {
 	nuget.PrintDependencies(cfg.Package, cfg.Version, deps)
 
 	//Построение полного графа зависимостей
-	getDepsFunc := func(packageName, version string) (map[string]string, error) {
+	getDepsFunc := func(packageName, version string) map[string]string {
 		deps, err := nuget.FetchPackageDependencies(cfg.Package, cfg.Version)
 		if err != nil {
-			return make(map[string]string), fmt.Errorf("⚠️  Предупреждение: не удалось получить зависимости для %s: %v\n", packageName, err)
+			return make(map[string]string)
 		}
 
-		return deps, nil
+		return deps
 	}
 
 	dependencyGraph, err := graph.BuildDependencyGraph(cfg.Package, cfg.Version, cfg.Filter, getDepsFunc)
@@ -101,12 +101,12 @@ func processTestMode(cfg *config.Config) {
 		os.Exit(1)
 	}
 
-	getDepsFunc := func(packageName, version string) (map[string]string, error) {
+	getDepsFunc := func(packageName, version string) map[string]string {
 		deps := testrepo.GetDepsFromTestRepo(repo)(packageName, version)
-		return deps, nil
+		return deps
 	}
 
-	deps, err := getDepsFunc(cfg.Package, "")
+	deps := getDepsFunc(cfg.Package, "")
 	if err != nil {
 		fmt.Printf("%v", err)
 		os.Exit(1)

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	URLAPI = "https://api.nuget.org/v3-flatcontainer/"
+	URLAPI = "https://api.nuget.org/v3-flatcontainer"
 	timeout      = 30 * time.Second
 )
 

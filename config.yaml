@@ -1,5 +1,5 @@
-package: "Newtonsoft.Json"
-repo: "https://api.nuget.org/v3/index.json"
+package: "Azure.Core"
+url: "https://api.nuget.org/v3/index.json"
 test_mode: false
-version: "13.0.1"
+version: "1.50.0"
 filter: ""
